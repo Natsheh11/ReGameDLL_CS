@@ -89,7 +89,7 @@ void ApplyMultiDamage(entvars_t *pevInflictor, entvars_t *pevAttacker)
 		return;
 
 	gMultiDamage.pEntity->TakeDamage(pevInflictor, pevAttacker, gMultiDamage.amount, gMultiDamage.type);
-
+	gMultiDamage.pEntity->ResetDmgPenetrationLevel();
 }
 
 void AddMultiDamage(entvars_t *pevInflictor, CBaseEntity *pEntity, float flDamage, int bitsDamageType)

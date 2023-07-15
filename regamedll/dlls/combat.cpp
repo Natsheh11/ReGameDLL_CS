@@ -1,5 +1,7 @@
 #include "precompiled.h"
 
+static float s_flAdjustedFlashDamage = 0.0f;
+
 void PlayerBlind(CBasePlayer *pPlayer, entvars_t *pevInflictor, entvars_t *pevAttacker, float fadeTime, float fadeHold, int alpha, Vector &color)
 {
 	UTIL_ScreenFade(pPlayer, color, fadeTime, fadeHold, alpha, 0);
@@ -16,12 +18,17 @@ void PlayerBlind(CBasePlayer *pPlayer, entvars_t *pevInflictor, entvars_t *pevAt
 		}
 	}
 
-	pPlayer->Blind(fadeTime * 0.33, fadeHold, fadeTime, alpha);
+	float flDurationTime = fadeTime * 0.33;
+	pPlayer->Blind(flDurationTime, fadeHold, fadeTime, alpha);
 
 	if (TheBots)
 	{
 		TheBots->OnEvent(EVENT_PLAYER_BLINDED_BY_FLASHBANG, pPlayer);
 	}
+
+#if defined(REGAMEDLL_API) && defined(REGAMEDLL_ADD)
+	pPlayer->CSPlayer()->RecordDamage(CBasePlayer::Instance(pevAttacker), s_flAdjustedFlashDamage * 16.0f, flDurationTime);
+#endif
 }
 
 void RadiusFlash_TraceLine_hook(CBasePlayer *pPlayer, entvars_t *pevInflictor, entvars_t *pevAttacker, Vector &vecSrc, Vector &vecSpot, TraceResult *tr)
@@ -36,7 +43,7 @@ void RadiusFlash(Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker,
 {
 	CBaseEntity *pEntity = nullptr;
 	TraceResult tr;
-	float flAdjustedDamage, falloff;
+	float falloff;
 	Vector vecSpot;
 	float flRadius = 1500;
 
@@ -96,10 +103,9 @@ void RadiusFlash(Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker,
 				tr.flFraction = 0;
 			}
 
-			flAdjustedDamage = flDamage - (vecSrc - tr.vecEndPos).Length() * falloff;
-
-			if (flAdjustedDamage < 0)
-				flAdjustedDamage = 0;
+			s_flAdjustedFlashDamage = flDamage - (vecSrc - tr.vecEndPos).Length() * falloff;
+			if (s_flAdjustedFlashDamage < 0)
+				s_flAdjustedFlashDamage = 0;
 
 			UTIL_MakeVectors(pPlayer->pev->v_angle);
 			vecLOS = vecSrc - pPlayer->EarPosition();
@@ -108,14 +114,14 @@ void RadiusFlash(Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker,
 			if (flDot < 0)
 			{
 				alpha = 200;
-				fadeTime = flAdjustedDamage * 1.75;
-				fadeHold = flAdjustedDamage / 3.5;
+				fadeTime = s_flAdjustedFlashDamage * 1.75;
+				fadeHold = s_flAdjustedFlashDamage / 3.5;
 			}
 			else
 			{
 				alpha = 255;
-				fadeTime = flAdjustedDamage * 3;
-				fadeHold = flAdjustedDamage / 1.5;
+				fadeTime = s_flAdjustedFlashDamage * 3;
+				fadeHold = s_flAdjustedFlashDamage / 1.5;
 			}
 
 			currentHoldTime = pPlayer->m_blindStartTime + pPlayer->m_blindHoldTime - gpGlobals->time;
@@ -290,6 +296,8 @@ void RadiusDamage(Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker
 
 					if (tr.flFraction != 1.0f)
 						flAdjustedDamage = 0.0f;
+					else
+						pEntity->SetDmgPenetrationLevel(1);
 				}
 #endif
 			}
