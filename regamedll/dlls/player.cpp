@@ -7046,7 +7046,7 @@ void CBasePlayer::SendAmmoUpdate()
 {
 	for (int i = 0; i < MAX_AMMO_SLOTS; i++)
 	{
-		if (m_rgAmmo[i] != m_rgAmmoLast[i])
+		if (m_rgAmmoLast[i] != -1 && m_rgAmmo[i] != m_rgAmmoLast[i])
 		{
 			m_rgAmmoLast[i] = m_rgAmmo[i];
 
