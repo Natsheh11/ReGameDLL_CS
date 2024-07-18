@@ -1139,7 +1139,7 @@ void SV_StudioSetupBones(model_t *pModel, float frame, int sequence, const vec_t
 		StudioSlerpBones(q, pos, q3, pos3, t);
 	}
 
-	if (pseqdesc->numblends == 9 && sequence < ANIM_FIRST_DEATH_SEQUENCE && sequence != ANIM_SWIM_1 && sequence != ANIM_SWIM_2)
+	if (pseqdesc->numblends == 9 && sequence != ANIM_SWIM_1 && sequence != ANIM_SWIM_2)
 	{
 		bool bCopy = true;
 		int gaitsequence = GetPlayerGaitsequence(pEdict);	// calc gait animation
